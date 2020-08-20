@@ -1,0 +1,81 @@
+_schema-version: "3.2"
+ID: custom-extendui
+version: 0.0.1
+modules:
+- name: custom-extendui1-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: uaa_custom-extendui1
+    parameters:
+      service-key:
+        name: uaa_custom-extendui1-key
+  - name: custom-extendui1_html_repo_host
+    parameters:
+      service-key:
+        name: custom-extendui1_html_repo_host-key
+  - name: custom-extendui1-destination-service
+    parameters:
+      content-target: true
+  parameters:
+    content:
+      subaccount:
+        destinations:
+        - Name: bpServiceManaged_custom_extendui1_html_repo_host
+          ServiceInstanceName: custom-extendui1-html5-app-host-service
+          ServiceKeyName: custom-extendui1_html_repo_host-key
+          sap.cloud.service: bpServiceManaged
+        - Authentication: OAuth2UserTokenExchange
+          Name: bpServiceManaged_uaa_custom_extendui1
+          ServiceInstanceName: custom-extendui1-xsuaa-service
+          ServiceKeyName: uaa_custom-extendui1-key
+          sap.cloud.service: bpServiceManaged
+        existing_destinations_policy: update
+  build-parameters:
+    no-source: true
+- name: custom-extendui1_ui_deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: custom-extendui1_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - BP-content.zip
+      name: BP
+      target-path: resources/
+- name: BP
+  type: html5
+  path: BP
+  build-parameters:
+    builder: custom
+    commands:
+    - npm run build
+    supported-platforms: []
+resources:
+- name: custom-extendui1-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: destination
+    service-name: custom-extendui1-destination-service
+    service-plan: lite
+- name: custom-extendui1_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: custom-extendui1-html5-app-host-service
+    service-plan: app-host
+- name: uaa_custom-extendui1
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: custom-extendui1-xsuaa-service
+    service-plan: application
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm install
